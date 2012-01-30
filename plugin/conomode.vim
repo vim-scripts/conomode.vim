@@ -2,26 +2,26 @@
 " General: {{{1
 " File:		conomode.vim
 " Created:	2008 Sep 28
-" Last Change:	2012 Jan 28
-" Rev Days:	36
+" Last Change:	2012 Jan 30
+" Rev Days:	38
 " Author:	Andy Wokula <anwoku@yahoo.de>
-" Version:	0.6 (macro, undo)
+" Version:	0.6.1 (macro, undo)
 " Credits:
 "   inspired from a vim_use thread on vi-style editing in the bash (there
 "   enabled with 'set -o vi').
 "   Subject:  command line
 "   Date:     25-09-2008
 
-" CAUTION:	This script may crash Vim now and then!  (buggy
-"		getcmdline()?) -- almost fixed since Vim7.3f BETA
+" CAUTION:	This script may crash older Vims now and then!  (buggy
+"		getcmdline()?) -- fixed since Vim7.3
 
 " Description: {{{1
 "   Implements a kind of Normal mode ( "Cmdline-Normal mode" ) for the
 "   Command line.  Great fun if   :h cmdline-window   gets boring ;-)
 
 " Usage: {{{1
-" - when in Cmdline-mode, press <C-O> to enter (was <F4>)
-"		"Commandline-Normal mode"
+" - when in Cmdline-mode, press <C-O> to enter "Commandline-Normal mode"
+"   (the key was <F4> in older versions)
 " - mode indicator: a colon ":" at the cursor, hiding the char under it
 "   (side effect of incomplete mapping)
 " - quit to Cmdline-mode with "i", ":", or any unmapped key (which then
@@ -87,7 +87,6 @@
 " - ok: "cw{text}<CR>5." -- "5." does "5cw{text}<CR>"
 
 " TODO: {{{1
-" - M recording of ^R* (or remove ^R*)
 " - M we need a beep: when executing, if one of the recorded commands fails,
 "   the rest of the commands should not be executed
 " - M beep: or just do  :normal <C-C>  plus  feedkeys( <SID>: ) ?
@@ -737,7 +736,8 @@ func! <sid>opend(motion, ...)
     if s:operator == "c" && motion ==? "w"
 	\ && getcmdline()[gcp] =~ '\S'
 	let motion = tr(motion, "wW", "eE")
-    elseif motion == '_'
+    endif
+    if motion == '_'
 	" special case, text object for a line
 	let gcp = 0
 	let tarpos = s:getpos_dollar()
@@ -745,7 +745,6 @@ func! <sid>opend(motion, ...)
 	let tarpos = s:getpos_{motion}()
     endif
 
-    " only exclusive "motions"
     let cmdl = getcmdline()
     if gcp < tarpos
 	let [pos1, pos2] = [gcp, tarpos+s:incloff]
@@ -1240,14 +1239,14 @@ if !hasmapto("<Plug>(Conomode)", "c")
 endif
 
 cmap		   <Plug>(Conomode)	<SID>(Como)
-cmap     <expr>    <SID>(Como)		getcmdtype()=="@" ? "" : "<SID>(ComoProceed)"
+cmap     <expr>    <SID>(Como)		getcmdtype()=~'[=>@]' ? "" : "<SID>(ComoProceed)"
 cnoremap <script>  <SID>(ComoProceed)	<SID>set_tm<CR><SID>:
 cnoremap <silent>  <SID>set_tm		<C-R>=<sid>set_tm()
 
 " Cmdline Mode Shortcuts: {{{1
 
 " FIXME <C-W> inserts "dbi" when used with input(); solution: allow for
-" recursion (keep mappings simple)
+" recursion (keep mappings simple); problem: <C-\>e / <C-R>= can't be nested
 
 if g:conomode_emacs_keys
     " bash-like <C-W> <C-Y> in vim command-line mode, a few Emacs shortcuts
